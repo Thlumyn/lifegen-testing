@@ -46,7 +46,7 @@ class MiscEvents():
 
             acc_checked_events.append(event)
             
-        reveal = False
+        reveal = None
         victim = None
         cat_history = History.get_murders(cat)
         if cat_history:
@@ -116,9 +116,16 @@ class MiscEvents():
             types.append("other_clans")
         if ceremony:
             types.append("ceremony")
+        if other_cat and reveal:
+            if "mu" + str(other_cat.name) in event_text:
+                return
+        if "r_c" in event_text:
+            print("r_c was found")
+            print(event_text)
+            return
+        
         game.cur_events_list.append(Single_Event(event_text, types, involved_cats))
-
-        if reveal:
+        if reveal and victim:
             History.reveal_murder(cat, other_cat, Cat, victim, murder_index)
 
     @staticmethod
@@ -191,20 +198,42 @@ class MiscEvents():
             acc_list.extend(Pelt.plant_accessories)
         if "COLLAR" in possible_accs:
             acc_list.extend(Pelt.collars)
+        if "FLOWER" in possible_accs:
+            acc_list.extend(Pelt.flower_accessories)
+        if "PLANT2" in possible_accs:
+            acc_list.extend(Pelt.plant2_accessories)
+        if "SNAKE" in possible_accs:
+            acc_list.extend(Pelt.snake_accessories)
+        if "SMALLANIMAL" in possible_accs:
+            acc_list.extend(Pelt.smallAnimal_accessories)
+        if "DEADINSECT" in possible_accs:
+            acc_list.extend(Pelt.deadInsect_accessories)
+        if "ALIVEINSECT" in possible_accs:
+            acc_list.extend(Pelt.aliveInsect_accessories)
+        if "FRUIT" in possible_accs:
+            acc_list.extend(Pelt.fruit_accessories)
+        if "CRAFTED" in possible_accs:
+            acc_list.extend(Pelt.crafted_accessories)
+        if "TAIL2" in possible_accs:
+            acc_list.extend(Pelt.tail2_accessories)
 
         for acc in possible_accs:
-            if acc not in ["WILD", "PLANT", "COLLAR"]:
+            if acc not in ["WILD", "PLANT", "COLLAR", "FLOWER", "PLANT2", "SNAKE", "SMALLANIMAL", "DEADINSECT", "ALIVEINSECT", "FRUIT", "CRAFTED", "TAIL2"]:
                 acc_list.append(acc)
 
         if "NOTAIL" in cat.pelt.scars or "HALFTAIL" in cat.pelt.scars:
-            for acc in Pelt.tail_accessories:
-                try:
-                    acc_list.remove(acc)
-                except ValueError:
-                    print(f'attempted to remove {acc} from possible acc list, but it was not in the list!')
+            for acc in Pelt.tail_accessories or Pelt.tail2_accessories:
+                if acc in acc_list:
+                    try:
+                        acc_list.remove(acc)
+                    except ValueError:
+                        print(f'attempted to remove {acc} from possible acc list, but it was not in the list!')
 
-
-        cat.pelt.accessory = random.choice(acc_list)
+        acc = random.choice(acc_list)
+        cat.pelt.accessory = acc
+        if not cat.pelt.inventory:
+            cat.pelt.inventory = []
+        cat.pelt.inventory.append(acc)
 
     @staticmethod
     def handle_murder_self_reveals(cat):

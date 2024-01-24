@@ -66,6 +66,57 @@ def get_alive_kits(Cat):
 
     return alive_kits
 
+def get_alive_apps(Cat):
+    """
+    returns a list of IDs for all living apps in the clan
+    """
+    alive_apps = [i for i in Cat.all_cats.values() if
+                  i.status == 'apprentice' and not i.dead and not i.outside]
+
+    return alive_apps
+
+def get_alive_warriors(Cat):
+    """
+    returns a list of IDs for all living apps in the clan
+    """
+    alive_apps = [i for i in Cat.all_cats.values() if
+                  i.status == 'warrior' and not i.dead and not i.outside]
+
+    return alive_apps
+
+def get_alive_meds(Cat):
+    """
+    returns a list of IDs for all living apps in the clan
+    """
+    alive_apps = [i for i in Cat.all_cats.values() if
+                  (i.status == 'medicine cat' or i.status == 'medicine cat apprentice') and not i.dead and not i.outside]
+
+    return alive_apps
+
+def get_alive_mediators(Cat):
+    """
+    returns a list of IDs for all living apps in the clan
+    """
+    alive_apps = [i for i in Cat.all_cats.values() if
+                   (i.status == 'mediator' or i.status == 'mediator apprentice') and not i.dead and not i.outside]
+
+    return alive_apps
+
+def get_alive_queens(Cat):
+    """
+    returns a list of IDs for all living apps in the clan
+    """
+    alive_apps = [i for i in Cat.all_cats.values() if
+                  (i.status == 'queen' or i.status == "queen's apprentice") and not i.dead and not i.outside]
+    return alive_apps
+
+def get_alive_elders(Cat):
+    """
+    returns a list of IDs for all living apps in the clan
+    """
+    alive_apps = [i for i in Cat.all_cats.values() if
+                  i.status == 'elder' and not i.dead and not i.outside]
+    return alive_apps
 
 def get_med_cats(Cat, working=True):
     """
@@ -85,6 +136,13 @@ def get_med_cats(Cat, working=True):
 
     return possible_med_cats
 
+def get_alive_cats(Cat):
+    """
+    returns a list of IDs for all living apps in the clan
+    """
+    alive_apps = [i for i in Cat.all_cats.values() if
+                  not i.dead and not i.outside]
+    return alive_apps
 
 def get_living_cat_count(Cat):
     """
@@ -266,6 +324,8 @@ def create_new_cat(Cat,
             age = randint(1, 5)
         elif status in ('apprentice', 'medicine cat apprentice', 'mediator apprentice'):
             age = randint(6, 11)
+        elif status in ('apprentice', 'medicine cat apprentice', 'mediator apprentice') and litter:
+            age = randint(20, 30)
         elif status == 'warrior':
             age = randint(23, 120)
         elif status == 'medicine cat':
@@ -466,7 +526,7 @@ def create_outside_cat(Cat, status, backstory, alive=True, thought=None):
     game.clan.add_to_outside(new_cat)
     name = str(name + suffix)
 
-    return name
+    return new_cat
 
 
 # ---------------------------------------------------------------------------- #
@@ -697,6 +757,29 @@ def change_relationship_values(cats_to: list,
                   
             if log and isinstance(log, str):
                 rel.log.append(log)
+
+def get_cluster(trait):
+        # Mapping traits to their respective clusters
+        trait_to_clusters = {
+            "assertive": ["troublesome", "fierce", "bold", "daring", "confident", "adventurous", "arrogant", "competitive", "smug", "impulsive", "noisy"],
+            "brooding": ["bloodthirsty", "cold", "strict", "vengeful", "grumpy", "bullying", "secretive", "aloof", "stoic"],
+            "cool": ["charismatic", "sneaky", "cunning", "arrogant", "charming", "manipulative", "leader-like", "passionate", "witty", "flexible"],
+            "upstanding": ["righteous", "ambitious", "strict", "competitive", "responsible", "bossy", "know-it-all", "leader-like", "smug", "loyal"],
+            "introspective": ["lonesome", "righteous", "calm", "gloomy", "wise", "thoughtful", "quiet", "daydreamer", "flexible"],
+            "neurotic": ["nervous", "insecure", "lonesome", "quiet", "secretive", "careful", "meek", "mellow"],
+            "silly": ["troublesome", "childish", "playful", "strange", "noisy", "attention-seeker", "rebellious"],
+            "stable": ["loyal", "responsible", "wise", "faithful", "polite", "disciplined", "patient", "passionate", "witty", "trusting"],
+            "sweet": ["compassionate", "faithful", "loving", "oblivious", "sincere", "sweet", "polite", "daydreamer", "trusting", "humble"],
+            "unabashed": ["childish", "confident", "bold", "shameless", "strange", "oblivious", "flamboyant", "impulsive", "noisy", "honest"],
+            "unlawful": ["bloodthirsty", "sneaky", "rebellious", "manipulative", "obsessive", "aloof", "stoic"]
+        }
+        clusters = [key for key, values in trait_to_clusters.items() if trait in values]
+
+        # Assign cluster and second_cluster based on the length of clusters list
+        cluster = clusters[0] if clusters else ""
+        second_cluster = clusters[1] if len(clusters) > 1 else ""
+
+        return cluster, second_cluster
 
 
 # ---------------------------------------------------------------------------- #
@@ -990,6 +1073,11 @@ def event_text_adjust(Cat,
     if "acc_singular" in text:
         text = text.replace("acc_singular", str(ACC_DISPLAY[cat.pelt.accessory]["singular"]))
 
+    if murder_reveal:
+        victim_cat = Cat.fetch_cat(victim)
+        if victim_cat:
+            text = text.replace("mur_c", str(victim_cat.name))
+    
     if other_cat:
         if other_cat.pronouns:
             cat_dict["r_c"] = (str(other_cat.name), choice(other_cat.pronouns))
@@ -1025,7 +1113,6 @@ def event_text_adjust(Cat,
     adjust_text = process_text(text, cat_dict)
 
     return adjust_text
-
 
 def leader_ceremony_text_adjust(Cat,
                                 text,
@@ -1248,7 +1335,6 @@ def generate_sprite(cat, life_state=None, scars_hidden=False, acc_hidden=False, 
                 tortie_pattern + cat.pelt.tortiecolour + cat_sprite].copy()
             patches.blit(sprites.sprites["tortiemask" + cat.pelt.pattern + cat_sprite], (0, 0),
                          special_flags=pygame.BLEND_RGBA_MULT)
-
             # Add patches onto cat.
             new_sprite.blit(patches, (0, 0))
 
@@ -1322,13 +1408,120 @@ def generate_sprite(cat, life_state=None, scars_hidden=False, acc_hidden=False, 
                     new_sprite.blit(sprites.sprites['scars' + scar + cat_sprite], (0, 0), special_flags=blendmode)
 
         # draw accessories
-        if not acc_hidden:        
-            if cat.pelt.accessory in cat.pelt.plant_accessories:
-                new_sprite.blit(sprites.sprites['acc_herbs' + cat.pelt.accessory + cat_sprite], (0, 0))
-            elif cat.pelt.accessory in cat.pelt.wild_accessories:
-                new_sprite.blit(sprites.sprites['acc_wild' + cat.pelt.accessory + cat_sprite], (0, 0))
-            elif cat.pelt.accessory in cat.pelt.collars:
-                new_sprite.blit(sprites.sprites['collars' + cat.pelt.accessory + cat_sprite], (0, 0))
+        clangen_accessories = ['MAPLE LEAF',
+                            'HOLLY',
+                            'BLUE BERRIES',
+                            'FORGET ME NOTS',
+                            'RYE STALK',
+                            'LAUREL',
+                            'BLUEBELLS',
+                            'NETTLE',
+                            'POPPY',
+                            'LAVENDER',
+                            'HERBS',
+                            'PETALS',
+                            'OAK LEAVES',
+                            'CATMINT',
+                            'MAPLE SEED',
+                            'JUNIPER',
+                            'DRY HERBS',
+                            'RED FEATHERS',
+                            'BLUE FEATHERS',
+                            'JAY FEATHERS',
+                            'MOTH WINGS',
+                            'CICADA WINGS',
+                            'CRIMSON',
+                            'BLUE',
+                            'YELLOW',
+                            'CYAN',
+                            'RED',
+                            'LIME',
+                            'GREEN',
+                            'RAINBOW',
+                            'BLACK',
+                            'SPIKES',
+                            'WHITE',
+                            'PINK',
+                            'PURPLE',
+                            'MULTI',
+                            'INDIGO',
+                            'CRIMSONBELL',
+                            'BLUEBELL',
+                            'YELLOWBELL',
+                            'CYANBELL',
+                            'REDBELL',
+                            'LIMEBELL',
+                            'GREENBELL',
+                            'RAINBOWBELL',
+                            'BLACKBELL',
+                            'SPIKESBELL',
+                            'WHITEBELL',
+                            'PINKBELL',
+                            'PURPLEBELL',
+                            'MULTIBELL',
+                            'INDIGOBELL',
+                            'CRIMSONBOW',
+                            'BLUEBOW',
+                            'YELLOWBOW',
+                            'CYANBOW',
+                            'REDBOW',
+                            'LIMEBOW',
+                            'GREENBOW',
+                            'RAINBOWBOW',
+                            'BLACKBOW',
+                            'SPIKESBOW',
+                            'WHITEBOW',
+                            'PINKBOW',
+                            'PURPLEBOW',
+                            'MULTIBOW',
+                            'INDIGOBOW',
+                            'CRIMSONNYLON',
+                            'BLUENYLON',
+                            'YELLOWNYLON',
+                            'CYANNYLON',
+                            'REDNYLON',
+                            'LIMENYLON',
+                            'GREENNYLON',
+                            'RAINBOWNYLON',
+                            'BLACKNYLON',
+                            'SPIKESNYLON',
+                            'WHITENYLON',
+                            'PINKNYLON',
+                            'PURPLENYLON',
+                            'MULTINYLON',
+                            'INDIGONYLON']
+
+        for i in cat.pelt.accessories:
+            if i not in clangen_accessories and game.settings['new accessories'] is False:
+                continue
+            if not acc_hidden:
+                try:
+                    if i in cat.pelt.plant_accessories:
+                        new_sprite.blit(sprites.sprites['acc_herbs' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.wild_accessories:
+                        new_sprite.blit(sprites.sprites['acc_wild' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.collars:
+                        new_sprite.blit(sprites.sprites['collars' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.flower_accessories:
+                        new_sprite.blit(sprites.sprites['acc_flower' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.plant2_accessories:
+                        new_sprite.blit(sprites.sprites['acc_plant2' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.snake_accessories:
+                        new_sprite.blit(sprites.sprites['acc_snake' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.smallAnimal_accessories:
+                        new_sprite.blit(sprites.sprites['acc_smallAnimal' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.deadInsect_accessories:
+                        new_sprite.blit(sprites.sprites['acc_deadInsect' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.aliveInsect_accessories:
+                        new_sprite.blit(sprites.sprites['acc_aliveInsect' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.fruit_accessories:
+                        new_sprite.blit(sprites.sprites['acc_fruit' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.crafted_accessories:
+                        new_sprite.blit(sprites.sprites['acc_crafted' + i + cat_sprite], (0, 0))
+                    elif i in cat.pelt.tail2_accessories:
+                        new_sprite.blit(sprites.sprites['acc_tail2' + i + cat_sprite], (0, 0))
+                except:
+                    continue
 
         # Apply fading fog
         if cat.pelt.opacity <= 97 and not cat.prevent_fading and game.clan.clan_settings["fading"] and dead:
