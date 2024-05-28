@@ -1,9 +1,3 @@
----
-name: Content/Feature
-about: Anything that is NOT a bugfix.
-title: ""
----
-
 <!-- Write BELOW The Headers and ABOVE The comments else it may not be viewable. -->
 <!-- You can view CONTRIBUTING.md for a detailed description of the pull request process. -->
 
@@ -13,9 +7,16 @@ title: ""
 
 ## Why This Is Good For ClanGen
 
+<!-- If this is a bugfix, you can remove this section. -->
 <!-- Please add a short description of why you think these changes would benefit the game. -->
 <!-- If this PR was the result of discussion/testing on the discord, please add a link to the discord conversation here. -->
 <!-- If you have multiple features that can stand on their own, or unrelated bugfixes, please create separate PRs for them. -->
+
+## Linked Issues
+
+<!-- If this is not a bugfix, you can remove this section. -->
+<!-- If this was in response to a github issue, please write it here with the format Fixes: #1234 so that github knows to link the issues. -->
+<!-- If this PR was the result of discussion/testing on the discord, please add a link to the discord conversation here. -->
 
 ## Proof of Testing
 
